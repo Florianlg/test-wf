@@ -35,9 +35,11 @@ jobs:
         run: npm run build # Lance le script "build" défini dans package.json
 
       # Étape 4 : déploie le site généré sur Surge.sh
+      # Installe Surge globalement (en CLI)
+      # Spécifie le dossier à publier (souvent le dossier de build)
+      # Domaine personnalisé (fixe)
+      # Utilise le token d’authentification stocké dans les secrets GitHub
       - name: Deploy
         run: |
-          npm install -g surge    # Installe Surge globalement (en CLI)
-          surge --project ./dist  \   # Spécifie le dossier à publier (souvent le dossier de build)
-                --domain cda-correction-s03j02.surge.sh \  # Domaine personnalisé (fixe)
-                --token ${{ secrets.SURGE_TOKEN }}  # Utilise le token d’authentification stocké dans les secrets GitHub
+          npm install -g surge    
+          surge ./dist --domain cda-correction.surge.sh --token ${{ secrets.SURGE_TOKEN }}
