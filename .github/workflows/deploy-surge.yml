@@ -1,0 +1,43 @@
+# Nom du workflow tel qu'il apparaîtra dans l'interface GitHub
+name: Deploy to Surge
+
+# Déclencheurs du workflow
+on:
+  workflow_dispatch: # Permet de déclencher manuellement le workflow depuis GitHub
+  push: # Déclenche automatiquement le workflow lors d’un push...
+    branches: "main" # ... mais uniquement sur la branche "main"
+
+# Évite les déploiements simultanés
+concurrency:
+  group: "surge" # Tous les jobs dans ce groupe sont exclusifs
+  cancel-in-progress: true # Annule les workflows en cours si un nouveau est déclenché
+
+jobs:
+  build: # Nom du job
+    environment: production # Indique que ce job est destiné à l’environnement "production"
+    runs-on: ubuntu-latest # Utilise une machine virtuelle Ubuntu à jour
+    defaults:
+      run:
+        shell: bash # Utilise Bash comme interpréteur de commandes
+        working-directory: projet/frontend # Définit le répertoire de travail pour toutes les étapes suivantes
+
+    steps:
+      # Étape 1 : récupère le code source depuis le dépôt
+      - name: Checkout
+        uses: actions/checkout@v3 # Action officielle pour cloner le dépôt GitHub
+
+      # Étape 2 : installe les dépendances Node.js à partir de package-lock.json
+      - name: Install dependencies
+        run: npm ci # Installe les dépendances en mode "clean install" (plus rapide et plus sûr que `npm install`)
+
+      # Étape 3 : construit le site (génère les fichiers statiques)
+      - name: Build
+        run: npm run build # Lance le script "build" défini dans package.json
+
+      # Étape 4 : déploie le site généré sur Surge.sh
+      - name: Deploy
+        run: |
+          npm install -g surge    # Installe Surge globalement (en CLI)
+          surge --project ./dist  \   # Spécifie le dossier à publier (souvent le dossier de build)
+                --domain cda-correction-s03j02.surge.sh \  # Domaine personnalisé (fixe)
+                --token ${{ secrets.SURGE_TOKEN }}  # Utilise le token d’authentification stocké dans les secrets GitHub
